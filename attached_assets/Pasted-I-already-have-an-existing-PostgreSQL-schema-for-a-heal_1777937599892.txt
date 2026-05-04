@@ -1,0 +1,120 @@
+I already have an existing PostgreSQL schema for a healthcare insurance claims system with the following tables:
+
+patients
+claims
+claim_events
+claim_agent_steps
+
+Your task is to enhance this schema by adding missing tables required for a production-grade AI-powered healthcare claims automation system (CLAIMAI).
+
+🎯 OBJECTIVE
+
+Extend the current database to support:
+
+Clinical data processing (doctor notes → structured data)
+Insurance metadata and eligibility tracking
+AI intelligence outputs (risk scoring, denial prediction)
+Payment tracking and reconciliation
+Full auditability and compliance
+
+Do NOT redesign existing tables. Only add new tables and relationships.
+
+🧱 REQUIRED NEW TABLES
+1. clinical_notes
+
+Stores raw doctor input.
+
+Fields:
+
+note_id (PK)
+patient_id (FK)
+doctor_id
+visit_date
+raw_notes (TEXT)
+created_at
+2. extracted_clinical_data
+
+Stores NLP output from clinical notes.
+
+Fields:
+
+clinical_id (PK)
+note_id (FK)
+diagnosis
+symptoms
+procedures
+severity_score
+extracted_at
+3. insurance_details
+
+Stores patient insurance information.
+
+Fields:
+
+insurance_id (PK)
+patient_id (FK)
+provider_name
+member_id
+plan_type
+coverage_start
+coverage_end
+eligibility_status
+4. claim_intelligence
+
+Stores AI-generated insights for each claim.
+
+Fields:
+
+intelligence_id (PK)
+claim_id (FK)
+risk_score (0–1)
+denial_probability
+issues_found (JSON)
+recommendations (JSON)
+model_version
+created_at
+5. payments
+
+Stores insurance payment data.
+
+Fields:
+
+payment_id (PK)
+claim_id (FK)
+amount_expected
+amount_received
+payer_reference
+payment_status
+payment_date
+6. audit_logs
+
+Tracks all system and AI actions for compliance.
+
+Fields:
+
+log_id (PK)
+entity_type (patient/claim/agent/event)
+entity_id
+action
+performed_by
+timestamp
+metadata (JSON)
+🔗 RELATIONSHIP RULES
+patients → claims (1:N)
+patients → clinical_notes (1:N)
+clinical_notes → extracted_clinical_data (1:1)
+claims → claim_agent_steps (1:N existing)
+claims → claim_events (1:N existing)
+claims → claim_intelligence (1:1 or 1:N allowed)
+claims → payments (1:N)
+all tables must support foreign key integrity
+⚙️ IMPLEMENTATION REQUIREMENTS
+Use PostgreSQL syntax
+Add indexes on:
+patient_id
+claim_id
+event_type
+risk_score
+Ensure JSON fields are used where appropriate
+Keep schema normalized (3NF where possible)
+Maintain scalability for millions of claims

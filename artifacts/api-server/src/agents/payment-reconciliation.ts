@@ -1,31 +1,18 @@
-import type { AgentResult, ClaimContext } from "./types.js";
+import type { AgentResult, ClaimContext, PaymentData } from "./types.js";
 
 function computePayment(ctx: ClaimContext): { approvedAmount: number; paymentStatus: string; discrepancy: boolean } {
   if (ctx.status === "DENIED" || ctx.status === "RESUBMITTED") {
-    return {
-      approvedAmount: 0,
-      paymentStatus: "DENIED",
-      discrepancy: true,
-    };
+    return { approvedAmount: 0, paymentStatus: "DENIED", discrepancy: true };
   }
-
   if (ctx.status === "PROCESSING" || ctx.status === "PENDING") {
-    return {
-      approvedAmount: 0,
-      paymentStatus: "PENDING",
-      discrepancy: false,
-    };
+    return { approvedAmount: 0, paymentStatus: "PENDING", discrepancy: false };
   }
 
   const coverageRate = 0.7 + Math.random() * 0.25;
   const approvedAmount = Math.round(ctx.totalAmount * coverageRate * 100) / 100;
   const discrepancy = approvedAmount < ctx.totalAmount * 0.85;
 
-  return {
-    approvedAmount,
-    paymentStatus: discrepancy ? "UNDERPAID" : "PAID",
-    discrepancy,
-  };
+  return { approvedAmount, paymentStatus: discrepancy ? "UNDERPAID" : "PAID", discrepancy };
 }
 
 export async function runPaymentReconciliationAgent(ctx: ClaimContext): Promise<AgentResult> {
@@ -55,12 +42,21 @@ export async function runPaymentReconciliationAgent(ctx: ClaimContext): Promise<
     }
   }
 
+  const payerRef = `PAY-${Date.now().toString(36).toUpperCase()}-${ctx.insurerId}`;
+
+  const paymentData: PaymentData = {
+    amountExpected: ctx.totalAmount,
+    amountReceived: approvedAmount,
+    payerReference: payerRef,
+    paymentStatus,
+  };
+
   const finalStatus = paymentStatus === "PAID" || paymentStatus === "UNDERPAID" ? "PAID" : ctx.status;
 
   const log = {
     agent: "Payment Reconciliation Agent",
     message: `Reconciliation complete. Payment: $${approvedAmount.toFixed(2)} / $${ctx.totalAmount.toFixed(2)}. Status: ${paymentStatus}`,
-    data: { approvedAmount, expectedAmount: ctx.totalAmount, paymentStatus, discrepancy },
+    data: { approvedAmount, expectedAmount: ctx.totalAmount, paymentStatus, discrepancy, payerRef } as Record<string, unknown>,
     timestamp: new Date().toISOString(),
   };
 
@@ -70,6 +66,7 @@ export async function runPaymentReconciliationAgent(ctx: ClaimContext): Promise<
       status: finalStatus,
       approvedAmount,
       paymentStatus,
+      paymentData,
       issuesDetected: [...ctx.issuesDetected, ...issues],
       actionsTaken: [...ctx.actionsTaken, ...actions],
       agentLog: [...ctx.agentLog, log],

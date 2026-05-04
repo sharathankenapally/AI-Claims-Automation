@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { patientsTable } from "@workspace/db";
+import { patientsTable, insuranceDetailsTable, auditLogsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import {
   CreatePatientBody,
@@ -50,6 +50,23 @@ router.post("/patients", async (req, res) => {
     res.status(500).json({ error: "Failed to create patient" });
     return;
   }
+
+  await db.insert(insuranceDetailsTable).values({
+    patientId: patient.id,
+    providerName: INSURER_NAMES[body.insurerId] ?? body.insurerId,
+    memberId: body.memberId,
+    planType: body.groupNumber,
+    coverageStart: new Date(),
+    eligibilityStatus: "ELIGIBLE",
+  });
+
+  await db.insert(auditLogsTable).values({
+    entityType: "patient",
+    entityId: patient.id,
+    action: "PATIENT_REGISTERED",
+    performedBy: "system:api",
+    metadata: { insurerId: body.insurerId, memberId: body.memberId },
+  });
 
   res.status(201).json({ ...patient, createdAt: patient.createdAt.toISOString() });
 });

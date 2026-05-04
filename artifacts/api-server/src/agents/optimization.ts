@@ -1,4 +1,4 @@
-import type { AgentResult, ClaimContext } from "./types.js";
+import type { AgentResult, ClaimContext, ClaimIntelligenceData } from "./types.js";
 
 interface OptimizationRule {
   id: string;
@@ -73,6 +73,7 @@ export async function runClaimOptimizationAgent(ctx: ClaimContext): Promise<Agen
 
   const noise = (Math.random() - 0.5) * 0.05;
   const riskScore = Math.max(0.05, Math.min(0.95, baseRisk + noise));
+  const denialProbability = Math.max(0.01, Math.min(0.99, riskScore * 0.6 + Math.random() * 0.1));
 
   const issues = triggeredRules.map((r) => r.description);
   const actions: string[] = [];
@@ -94,10 +95,18 @@ export async function runClaimOptimizationAgent(ctx: ClaimContext): Promise<Agen
     actions.push(`Risk score ${riskScore.toFixed(2)} exceeds threshold ${RISK_THRESHOLD} — applying fixes before submission`);
   }
 
+  const intelligenceData: ClaimIntelligenceData = {
+    riskScore,
+    denialProbability,
+    issuesFound: issues,
+    recommendations,
+    modelVersion: "1.0.0",
+  };
+
   const log = {
     agent: "Claim Optimization Agent",
     message: `Risk score: ${riskScore.toFixed(2)}. Rules triggered: ${triggeredRules.map((r) => r.id).join(", ") || "none"}`,
-    data: { riskScore, triggeredRules: triggeredRules.map((r) => r.id), threshold: RISK_THRESHOLD },
+    data: { riskScore, triggeredRules: triggeredRules.map((r) => r.id), threshold: RISK_THRESHOLD } as Record<string, unknown>,
     timestamp: new Date().toISOString(),
   };
 
@@ -105,6 +114,7 @@ export async function runClaimOptimizationAgent(ctx: ClaimContext): Promise<Agen
     context: {
       ...ctx,
       riskScore,
+      intelligenceData,
       issuesDetected: [...ctx.issuesDetected, ...issues],
       actionsTaken: [...ctx.actionsTaken, ...actions],
       agentLog: [...ctx.agentLog, log],

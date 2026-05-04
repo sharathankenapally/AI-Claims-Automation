@@ -1,3 +1,24 @@
+export interface NLPExtraction {
+  diagnoses: string[];
+  symptoms: string[];
+  procedures: string[];
+}
+
+export interface ClaimIntelligenceData {
+  riskScore: number;
+  denialProbability: number;
+  issuesFound: string[];
+  recommendations: string[];
+  modelVersion: string;
+}
+
+export interface PaymentData {
+  amountExpected: number;
+  amountReceived: number;
+  payerReference: string;
+  paymentStatus: string;
+}
+
 export interface ClaimContext {
   claimId: string;
   patientId: string;
@@ -17,6 +38,9 @@ export interface ClaimContext {
   paymentStatus: string | null;
   eligibilityValid: boolean;
   agentLog: AgentLogEntry[];
+  nlpExtraction?: NLPExtraction;
+  intelligenceData?: ClaimIntelligenceData;
+  paymentData?: PaymentData;
 }
 
 export interface AgentLogEntry {

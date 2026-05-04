@@ -1,10 +1,4 @@
-import type { AgentResult, ClaimContext } from "./types.js";
-
-interface NLPExtraction {
-  diagnoses: string[];
-  symptoms: string[];
-  procedures: string[];
-}
+import type { AgentResult, ClaimContext, NLPExtraction } from "./types.js";
 
 const DIAGNOSIS_PATTERNS: Array<{ pattern: RegExp; diagnosis: string }> = [
   { pattern: /diabet/i, diagnosis: "Type 2 Diabetes Mellitus" },
@@ -39,7 +33,7 @@ const PROCEDURE_PATTERNS: Array<{ pattern: RegExp; procedure: string }> = [
   { pattern: /medication|prescription|drug/i, procedure: "Medication administration" },
 ];
 
-function extractFromNotes(notes: string): NLPExtraction {
+export function extractFromNotes(notes: string): NLPExtraction {
   const diagnoses = DIAGNOSIS_PATTERNS.filter((d) => d.pattern.test(notes)).map((d) => d.diagnosis);
   const procedures = PROCEDURE_PATTERNS.filter((p) => p.pattern.test(notes)).map((p) => p.procedure);
 
@@ -80,13 +74,14 @@ export async function runClinicalNLPAgent(ctx: ClaimContext): Promise<AgentResul
   const log = {
     agent: "Clinical NLP Agent",
     message: `NLP extraction complete. Diagnoses: ${extraction.diagnoses.join(", ")}`,
-    data: extraction,
+    data: extraction as unknown as Record<string, unknown>,
     timestamp: new Date().toISOString(),
   };
 
   return {
     context: {
       ...ctx,
+      nlpExtraction: extraction,
       issuesDetected: [...ctx.issuesDetected, ...issues],
       actionsTaken: [...ctx.actionsTaken, ...actions],
       agentLog: [...ctx.agentLog, log],
