@@ -1,0 +1,128 @@
+
+Build a fully working AI-powered healthcare insurance claims automation system that:
+
+processes doctor clinical notes
+generates insurance claims
+runs multi-agent AI workflow
+predicts claim approval/denial
+auto-fixes rejected claims
+reconciles payments
+maintains full audit trail
+🤖 CORE SYSTEM ARCHITECTURE
+
+Implement a multi-agent orchestration system in Python.
+
+Each claim must pass through:
+
+Intake Agent
+Clinical NLP Agent
+Coding Agent
+Optimization Agent
+Submission Agent
+Monitoring Agent
+Denial Handling Agent (if needed)
+Payment Reconciliation Agent
+🔄 SYSTEM FLOW (IMPORTANT)
+clinical_notes → extracted_clinical_data
+        ↓
+claims creation
+        ↓
+Intake Agent
+        ↓
+Clinical NLP Agent
+        ↓
+Coding Agent
+        ↓
+Optimization Agent → writes claim_intelligence
+        ↓
+IF risk_score < threshold:
+    Submission Agent
+ELSE:
+    loop back to fix issues
+        ↓
+Monitoring Agent
+        ↓
+IF denied:
+    Denial Handling Agent → fix + resubmit loop
+        ↓
+Payment Reconciliation Agent → payments table update
+        ↓
+audit_logs updated throughout all steps
+🧠 INTELLIGENCE REQUIREMENTS
+Optimization Agent MUST:
+
+Generate and store in claim_intelligence:
+
+risk_score (0–1)
+denial_probability
+issues_found (JSON)
+recommendations (JSON)
+🏥 CLINICAL LAYER
+clinical_notes
+
+Stores raw doctor input.
+
+extracted_clinical_data
+
+Use NLP simulation to extract:
+
+diagnosis
+symptoms
+procedures
+
+This must feed into Coding Agent.
+
+💰 FINANCIAL LAYER
+payments table must:
+store expected vs actual payment
+detect underpayment
+track payer response
+🛡️ AUDIT SYSTEM (CRITICAL)
+audit_logs must capture:
+every agent action
+every system decision
+timestamps
+before/after state changes
+
+This is mandatory for healthcare compliance simulation.
+
+🤖 AGENT REQUIREMENTS
+
+Each agent must:
+
+be a separate Python module
+read/write PostgreSQL
+output structured JSON
+store execution logs in claim_agent_steps
+log events in claim_events
+🌐 API REQUIREMENTS (FASTAPI)
+
+Create REST APIs:
+
+POST /submit-claim
+POST /add-patient
+POST /add-clinical-note
+GET /claim/{id}
+GET /claim/{id}/timeline
+GET /claims
+📊 CLAIM TIMELINE ENGINE
+
+Reconstruct full lifecycle using:
+
+claim_agent_steps
+claim_events
+claim_intelligence
+
+Output must show:
+
+step-by-step agent execution
+inputs/outputs per agent
+decision path (approved/denied/fixed)
+🧪 SIMULATED INSURANCE SYSTEM
+
+Create mock payer logic:
+
+If risk_score > 0.7 → DENIED
+Else → APPROVED
+
+Store response in claim_events.

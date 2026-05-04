@@ -4,6 +4,7 @@ import claimsRouter from "./claims.js";
 import patientsRouter from "./patients.js";
 import dashboardRouter from "./dashboard.js";
 import agentsRouter from "./agents.js";
+import clinicalNotesRouter from "./clinical-notes.js";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(claimsRouter);
 router.use(patientsRouter);
 router.use(dashboardRouter);
 router.use(agentsRouter);
+router.use(clinicalNotesRouter);
 
 export default router;
