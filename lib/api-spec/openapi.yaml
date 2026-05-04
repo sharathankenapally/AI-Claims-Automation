@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Healthcare Insurance Claims Automation API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: claims
+    description: Claim lifecycle operations
+  - name: patients
+    description: Patient intake operations
+  - name: agents
+    description: Agent execution and status
+  - name: dashboard
+    description: Dashboard analytics
 paths:
   /healthz:
     get:
@@ -24,6 +32,236 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /claims:
+    get:
+      operationId: listClaims
+      tags: [claims]
+      summary: List all claims
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, DENIED, SUBMITTED, PROCESSING, RESUBMITTED, PAID]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimListResponse"
+    post:
+      operationId: createClaim
+      tags: [claims]
+      summary: Submit a new claim through the full agent pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClaimRequest"
+      responses:
+        "201":
+          description: Claim created and pipeline started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+
+  /claims/{claimId}:
+    get:
+      operationId: getClaim
+      tags: [claims]
+      summary: Get a claim by ID
+      parameters:
+        - name: claimId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Claim details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+
+  /claims/{claimId}/resubmit:
+    post:
+      operationId: resubmitClaim
+      tags: [claims]
+      summary: Manually trigger denial handling and resubmission
+      parameters:
+        - name: claimId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resubmission started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+
+  /claims/{claimId}/events:
+    get:
+      operationId: getClaimEvents
+      tags: [claims]
+      summary: Get agent decision log for a claim
+      parameters:
+        - name: claimId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent event timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimEventsResponse"
+
+  /patients:
+    get:
+      operationId: listPatients
+      tags: [patients]
+      summary: List all patients
+      responses:
+        "200":
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientListResponse"
+    post:
+      operationId: createPatient
+      tags: [patients]
+      summary: Register a new patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientRequest"
+      responses:
+        "201":
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /patients/{patientId}:
+    get:
+      operationId: getPatient
+      tags: [patients]
+      summary: Get patient details
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /agents/run:
+    post:
+      operationId: runAgentPipeline
+      tags: [agents]
+      summary: Manually trigger agent pipeline for a claim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunAgentRequest"
+      responses:
+        "200":
+          description: Pipeline result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentPipelineResult"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard KPI summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent claim activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivityResponse"
+
+  /dashboard/denial-analysis:
+    get:
+      operationId: getDenialAnalysis
+      tags: [dashboard]
+      summary: Get denial reason breakdown
+      responses:
+        "200":
+          description: Denial analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DenialAnalysisResponse"
+
+  /dashboard/revenue:
+    get:
+      operationId: getRevenueStats
+      tags: [dashboard]
+      summary: Get payment reconciliation and revenue stats
+      responses:
+        "200":
+          description: Revenue statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueStatsResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +272,427 @@ components:
       required:
         - status
 
+    ClaimStatus:
+      type: string
+      enum: [PENDING, APPROVED, DENIED, SUBMITTED, PROCESSING, RESUBMITTED, PAID]
+
+    AgentStep:
+      type: object
+      properties:
+        agent:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, done, failed, skipped]
+        startedAt:
+          type: string
+          nullable: true
+        completedAt:
+          type: string
+          nullable: true
+        output:
+          type: string
+          nullable: true
+      required:
+        - agent
+        - status
+        - startedAt
+        - completedAt
+        - output
+
+    ClaimEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        claimId:
+          type: string
+        agentName:
+          type: string
+        eventType:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - claimId
+        - agentName
+        - eventType
+        - message
+        - data
+        - createdAt
+
+    Claim:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        patientName:
+          type: string
+        insurerId:
+          type: string
+        insurerName:
+          type: string
+        status:
+          $ref: "#/components/schemas/ClaimStatus"
+        riskScore:
+          type: number
+        issuesDetected:
+          type: array
+          items:
+            type: string
+        actionsTaken:
+          type: array
+          items:
+            type: string
+        icdCodes:
+          type: array
+          items:
+            type: string
+        cptCodes:
+          type: array
+          items:
+            type: string
+        totalAmount:
+          type: number
+        approvedAmount:
+          type: number
+          nullable: true
+        paymentStatus:
+          type: string
+          nullable: true
+        denialReason:
+          type: string
+          nullable: true
+        submittedAt:
+          type: string
+          nullable: true
+        resolvedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        agentSteps:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentStep"
+      required:
+        - id
+        - patientId
+        - patientName
+        - insurerId
+        - insurerName
+        - status
+        - riskScore
+        - issuesDetected
+        - actionsTaken
+        - icdCodes
+        - cptCodes
+        - totalAmount
+        - approvedAmount
+        - paymentStatus
+        - denialReason
+        - submittedAt
+        - resolvedAt
+        - createdAt
+        - agentSteps
+
+    ClaimListResponse:
+      type: object
+      properties:
+        claims:
+          type: array
+          items:
+            $ref: "#/components/schemas/Claim"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - claims
+        - total
+        - page
+        - limit
+
+    CreateClaimRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        doctorNotes:
+          type: string
+        insurerId:
+          type: string
+        totalAmount:
+          type: number
+      required:
+        - patientId
+        - doctorNotes
+        - insurerId
+        - totalAmount
+
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+        memberId:
+          type: string
+        groupNumber:
+          type: string
+        insurerId:
+          type: string
+        insurerName:
+          type: string
+        eligibilityStatus:
+          type: string
+          enum: [ELIGIBLE, INELIGIBLE, PENDING]
+        createdAt:
+          type: string
+      required:
+        - id
+        - firstName
+        - lastName
+        - dateOfBirth
+        - memberId
+        - groupNumber
+        - insurerId
+        - insurerName
+        - eligibilityStatus
+        - createdAt
+
+    PatientListResponse:
+      type: object
+      properties:
+        patients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Patient"
+        total:
+          type: integer
+      required:
+        - patients
+        - total
+
+    CreatePatientRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+        memberId:
+          type: string
+        groupNumber:
+          type: string
+        insurerId:
+          type: string
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - memberId
+        - groupNumber
+        - insurerId
+
+    RunAgentRequest:
+      type: object
+      properties:
+        claimId:
+          type: string
+        agentName:
+          type: string
+          nullable: true
+      required:
+        - claimId
+        - agentName
+
+    AgentPipelineResult:
+      type: object
+      properties:
+        claimId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ClaimStatus"
+        riskScore:
+          type: number
+        issuesDetected:
+          type: array
+          items:
+            type: string
+        actionsTaken:
+          type: array
+          items:
+            type: string
+        paymentStatus:
+          type: string
+          nullable: true
+      required:
+        - claimId
+        - status
+        - riskScore
+        - issuesDetected
+        - actionsTaken
+        - paymentStatus
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalClaims:
+          type: integer
+        pendingClaims:
+          type: integer
+        approvedClaims:
+          type: integer
+        deniedClaims:
+          type: integer
+        paidClaims:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingRevenue:
+          type: number
+        denialRate:
+          type: number
+        avgRiskScore:
+          type: number
+        avgProcessingTimeHours:
+          type: number
+      required:
+        - totalClaims
+        - pendingClaims
+        - approvedClaims
+        - deniedClaims
+        - paidClaims
+        - totalRevenue
+        - pendingRevenue
+        - denialRate
+        - avgRiskScore
+        - avgProcessingTimeHours
+
+    RecentActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        claimId:
+          type: string
+        patientName:
+          type: string
+        agentName:
+          type: string
+        message:
+          type: string
+        status:
+          $ref: "#/components/schemas/ClaimStatus"
+        createdAt:
+          type: string
+      required:
+        - id
+        - claimId
+        - patientName
+        - agentName
+        - message
+        - status
+        - createdAt
+
+    RecentActivityResponse:
+      type: object
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentActivityItem"
+      required:
+        - activities
+
+    DenialReasonItem:
+      type: object
+      properties:
+        reason:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+      required:
+        - reason
+        - count
+        - percentage
+
+    DenialAnalysisResponse:
+      type: object
+      properties:
+        denialReasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/DenialReasonItem"
+        totalDenied:
+          type: integer
+        resubmissionSuccessRate:
+          type: number
+      required:
+        - denialReasons
+        - totalDenied
+        - resubmissionSuccessRate
+
+    ClaimEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClaimEvent"
+      required:
+        - events
+
+    RevenueStatsResponse:
+      type: object
+      properties:
+        expectedRevenue:
+          type: number
+        actualRevenue:
+          type: number
+        underpaymentAmount:
+          type: number
+        discrepancyCount:
+          type: integer
+        monthlyBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              expected:
+                type: number
+              actual:
+                type: number
+            required:
+              - month
+              - expected
+              - actual
+      required:
+        - expectedRevenue
+        - actualRevenue
+        - underpaymentAmount
+        - discrepancyCount
+        - monthlyBreakdown

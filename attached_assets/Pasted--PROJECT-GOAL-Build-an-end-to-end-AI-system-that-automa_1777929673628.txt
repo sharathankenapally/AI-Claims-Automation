@@ -1,0 +1,130 @@
+🎯 PROJECT GOAL
+
+Build an end-to-end AI system that automates the entire healthcare insurance claim lifecycle:
+
+Patient intake and insurance verification
+Clinical data extraction from doctor notes
+Medical coding (ICD / CPT generation)
+Claim validation and optimization before submission
+Insurance claim submission (clearinghouse simulation)
+Real-time claim monitoring
+Automatic denial detection and correction
+Payment reconciliation and revenue tracking
+
+The system must behave like a multi-agent autonomous workflow system, not a single chatbot.
+
+🧠 CORE ARCHITECTURE REQUIREMENTS
+
+Implement the system using a multi-agent design pattern (LangGraph / AutoGen / CrewAI style preferred).
+
+Create the following agents:
+
+Intake Agent
+Parse patient data
+Validate insurance eligibility
+Clinical NLP Agent
+Extract diagnosis, symptoms, procedures from doctor notes
+Coding Agent
+Generate ICD and CPT codes
+Claim Optimization Agent (MOST IMPORTANT)
+Validate claim completeness
+Predict denial probability
+Apply insurance rules
+Suggest fixes before submission
+Submission Agent
+Convert claim into structured insurance format (simulate X12)
+Submit claim and generate claim ID
+Monitoring Agent
+Track claim status (approved / pending / denied)
+Simulate payer responses
+Denial Handling Agent
+Analyze denial reason
+Fix claim issues
+Resubmit automatically
+Payment Reconciliation Agent
+Compare expected vs actual payment
+Detect underpayment or discrepancies
+🔄 WORKFLOW LOGIC (STRICT EXECUTION FLOW)
+Intake Agent
+→ Clinical NLP Agent
+→ Coding Agent
+→ Claim Optimization Agent
+    → IF risk_score > threshold: loop back to fix
+→ Submission Agent
+→ Monitoring Agent
+    → IF denied: Denial Handling Agent → resubmit
+→ Payment Reconciliation Agent
+🧠 CLAIM OPTIMIZATION LOGIC
+
+The Claim Optimization Agent must:
+
+Perform rule-based validation
+Detect missing or incorrect fields
+Predict claim denial probability (0–1 score)
+Use reasoning over:
+clinical notes
+insurance rules
+historical patterns (simulated dataset)
+Output recommendations for fixing claim before submission
+🏗️ TECH STACK REQUIREMENTS
+
+Use:
+
+Python
+FastAPI (backend API layer)
+LangGraph or AutoGen (agent orchestration)
+Pydantic (data models)
+Optional: OpenAI API / LLM simulation layer
+JSON-based internal communication between agents
+📦 PROJECT STRUCTURE
+
+Generate a production-ready structure:
+
+agents/
+orchestrator/
+services/
+models/
+api/
+utils/
+config/
+main.py
+
+Include modular, scalable design.
+
+📊 OUTPUT REQUIREMENTS
+
+Each claim must produce:
+
+{
+  "patient_id": "",
+  "claim_id": "",
+  "status": "APPROVED | DENIED | PENDING",
+  "risk_score": 0.0,
+  "issues_detected": [],
+  "actions_taken": [],
+  "payment_status": ""
+}
+⚙️ SIMULATION REQUIREMENTS
+Simulate insurance responses (approval, denial, delay)
+Simulate claim lifecycle end-to-end
+Include retry + correction loops
+Include logging for each agent decision
+🧠 IMPORTANT BEHAVIOR RULES
+System must behave like autonomous agents, not a single script
+Each agent should have clear responsibility
+Orchestrator must control workflow transitions
+Every decision must be explainable
+Optimize for automation and minimal human dependency
+🚀 FINAL DELIVERABLE
+
+Generate:
+
+Full working codebase
+Agent implementations
+Orchestrator workflow logic
+Sample input/output demo
+README explaining architecture
+Example test run
+🎯 GOAL OF THIS SYSTEM
+
+Build a real-world AI healthcare claims automation system that mimics how hospitals process insurance claims, but with intelligent multi-agent automation.
